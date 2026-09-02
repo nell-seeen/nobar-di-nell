@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { updateProfile } from 'firebase/auth';
-import { auth } from '../../firebase/config';
 import { useAuth } from '../../hooks/useAuth';
 import { X, User, Image as ImageIcon, Save, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -19,7 +17,7 @@ const DEFAULT_AVATARS = [
 ];
 
 export default function ProfileModal({ onClose }: ProfileModalProps) {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
@@ -33,15 +31,13 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
 
     setLoading(true);
     try {
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, {
-          displayName: displayName.trim(),
-          photoURL: photoURL.trim() || user.photoURL
-        });
-      }
+      // Just update local storage state since we're full anon
+      setUser({
+        ...user,
+        displayName: displayName.trim(),
+        photoURL: photoURL.trim() || user.photoURL
+      });
       onClose();
-      // Force a tiny reload to reflect across auth instances if needed
-      window.location.reload();
     } catch (error) {
       console.error('Failed to update profile', error);
       alert('Failed to update profile');

@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { signInAnonymously, updateProfile } from 'firebase/auth';
-import { auth } from '../../firebase/config';
+import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { PlaySquare } from 'lucide-react';
 
@@ -16,39 +14,21 @@ const AVATARS = [
 export default function ProfileSetup() {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
-  const [loading, setLoading] = useState(false);
-  const { user, setUser } = useAuthStore();
+  const { setUser } = useAuthStore();
 
-  useEffect(() => {
-    // Automatically sign in anonymously if no user is signed in yet
-    if (!user) {
-      signInAnonymously(auth).catch(console.error);
-    }
-  }, [user]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !auth.currentUser) return;
+    if (!name.trim()) return;
     
-    setLoading(true);
-    try {
-      await updateProfile(auth.currentUser, {
-        displayName: name.trim(),
-        photoURL: selectedAvatar
-      });
-      
-      // Update local store to trigger re-render and bypass this screen
-      setUser({
-        uid: auth.currentUser.uid,
-        displayName: name.trim(),
-        photoURL: selectedAvatar,
-        createdAt: Date.now() // approximate
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to save profile');
-      setLoading(false);
-    }
+    // Generate a random ID for this local session
+    const randomUid = 'anon_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    setUser({
+      uid: randomUid,
+      displayName: name.trim(),
+      photoURL: selectedAvatar,
+      createdAt: Date.now()
+    });
   };
 
   return (
@@ -103,10 +83,10 @@ export default function ProfileSetup() {
 
           <button
             type="submit"
-            disabled={!name.trim() || loading || !user}
+            disabled={!name.trim()}
             className="w-full py-3 px-4 bg-white text-black font-semibold rounded-xl hover:bg-neutral-200 transition disabled:opacity-50"
           >
-            {loading ? 'Saving...' : 'Continue'}
+            Continue
           </button>
         </form>
       </div>
