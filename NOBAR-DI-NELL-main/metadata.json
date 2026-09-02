@@ -1,0 +1,9 @@
+{
+  "name": "NOBAR",
+  "description": "Realtime Watch Party with synchronized playback, direct media streaming, and real-time chat.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

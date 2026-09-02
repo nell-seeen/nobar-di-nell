@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isRoomHost(roomId) {
+      return get(/databases/$(database)/documents/rooms/$(roomId)).data.hostId == request.auth.uid;
+    }
+    
+    match /config/{configId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /rooms/{roomId} {
+      allow read: if isAuthenticated();
+      // Allow create if they set themselves as host
+      allow create: if isAuthenticated() && request.resource.data.hostId == request.auth.uid;
+      // Allow update if host
+      allow update: if isAuthenticated() && (
+        isRoomHost(roomId) || // Host can update
+        request.resource.data.hostId == request.auth.uid // Atomic host transfer
+      );
+      
+      match /playback/state {
+        allow read: if isAuthenticated();
+        // Allow write for everyone to support 'Viewer Control' setting
+        allow write: if isAuthenticated();
+      }
+      
+      match /messages/{messageId} {
+        allow read: if isAuthenticated();
+        // Anyone in the room can chat
+        allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      }
+      
+      match /playlist/{itemId} {
+        allow read: if isAuthenticated();
+        // Allow write for everyone to support Voting and 'Playlist Modification' setting
+        allow write: if isAuthenticated();
+      }
+    }
+  }
+}
