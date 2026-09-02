@@ -19,7 +19,20 @@ interface PlaylistPanelProps {
   isHost: boolean;
 }
 
-function SortablePlaylistItem({ item, index, isPlaying, hasControl, hasPlaybackControl, onPlay, onRemove, onVote, userVote }) {
+interface SortablePlaylistItemProps {
+  key?: any;
+  item: any;
+  index: number;
+  isPlaying: boolean;
+  hasControl: boolean;
+  hasPlaybackControl: boolean;
+  onPlay: (index: number) => void;
+  onRemove: (id: string) => void;
+  onVote: (itemId: string, voteValue: 1 | -1 | 0) => void;
+  userVote: number;
+}
+
+function SortablePlaylistItem({ item, index, isPlaying, hasControl, hasPlaybackControl, onPlay, onRemove, onVote, userVote }: SortablePlaylistItemProps) {
   const {
     attributes,
     listeners,
@@ -154,13 +167,13 @@ export default function PlaylistPanel({ roomId, isHost }: PlaylistPanelProps) {
     }, playbackState.playbackVersion, user.uid);
   };
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     if (active.id !== over.id) {
       const oldIndex = items.findIndex(item => item.id === active.id);
       const newIndex = items.findIndex(item => item.id === over.id);
       
-      const newOrder = arrayMove(items, oldIndex, newIndex);
+      const newOrder = arrayMove(items, oldIndex, newIndex) as any[];
       
       // Update in firestore
       const updates = newOrder.map((item, idx) => ({ id: item.id, order: idx }));
