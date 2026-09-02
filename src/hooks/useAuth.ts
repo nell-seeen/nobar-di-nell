@@ -9,18 +9,10 @@ export function useAuth() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // If it's a new anonymous user, let's assign a Guest name
-        if (firebaseUser.isAnonymous && !firebaseUser.displayName) {
-          const guestName = `Guest_${Math.floor(1000 + Math.random() * 9000)}`;
-          await updateProfile(firebaseUser, { displayName: guestName });
-          // Reload to get updated profile
-          await firebaseUser.reload();
-        }
-        
         setUser({
           uid: firebaseUser.uid,
-          displayName: firebaseUser.displayName || 'Guest',
-          photoURL: firebaseUser.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${firebaseUser.displayName || 'G'}`,
+          displayName: firebaseUser.displayName || '',
+          photoURL: firebaseUser.photoURL || '',
           createdAt: firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime).getTime() : Date.now(),
         });
       } else {
