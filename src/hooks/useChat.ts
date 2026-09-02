@@ -5,12 +5,13 @@ import { useAuth } from './useAuth';
 export function useChat(roomId: string | undefined) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const { user } = useAuth();
+  const userId = user?.uid;
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !userId) return;
     const unsubscribe = listenToChat(roomId, setMessages);
     return () => unsubscribe();
-  }, [roomId]);
+  }, [roomId, userId]);
 
   const send = async (text: string) => {
     if (!roomId || !user || !text.trim()) return;

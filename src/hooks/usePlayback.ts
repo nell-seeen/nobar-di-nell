@@ -2,12 +2,15 @@ import { useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { usePlaybackStore, PlaybackStateDoc } from '../store/playbackStore';
+import { useAuth } from './useAuth';
 
 export function usePlayback(roomId: string | undefined) {
   const { playbackState, setPlaybackState } = usePlaybackStore();
+  const { user } = useAuth();
+  const userId = user?.uid;
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !userId) return;
 
     const playbackRef = doc(db, `rooms/${roomId}/playback`, 'state');
     
@@ -18,7 +21,7 @@ export function usePlayback(roomId: string | undefined) {
     });
 
     return () => unsubscribe();
-  }, [roomId, setPlaybackState]);
+  }, [roomId, userId, setPlaybackState]);
 
   return { playbackState };
 }

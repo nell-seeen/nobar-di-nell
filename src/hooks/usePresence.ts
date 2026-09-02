@@ -5,10 +5,11 @@ import { usePresenceStore } from '../store/presenceStore';
 
 export function usePresence(roomId: string | undefined) {
   const { user } = useAuth();
+  const userId = user?.uid;
   const { users, setUsers } = usePresenceStore();
 
   useEffect(() => {
-    if (!roomId || !user) return;
+    if (!roomId || !userId || !user) return;
 
     // Join presence
     const cleanupPresence = joinPresence(roomId, user);
@@ -22,7 +23,7 @@ export function usePresence(roomId: string | undefined) {
       cleanupPresence();
       cleanupListen();
     };
-  }, [roomId, user, setUsers]);
+  }, [roomId, userId, setUsers]);
 
   return { users, onlineCount: Object.values(users).filter(u => u.online).length };
 }

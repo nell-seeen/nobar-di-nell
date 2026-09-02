@@ -7,9 +7,10 @@ import { useAuth } from './useAuth';
 export function useRoom(roomId: string | undefined) {
   const { room, setRoom, setLoading, setError } = useRoomStore();
   const { user } = useAuth();
+  const userId = user?.uid;
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !userId) return;
 
     setLoading(true);
     const roomRef = doc(db, 'rooms', roomId);
@@ -30,7 +31,7 @@ export function useRoom(roomId: string | undefined) {
     });
 
     return () => unsubscribe();
-  }, [roomId, setRoom, setLoading, setError]);
+  }, [roomId, userId, setRoom, setLoading, setError]);
 
   const isHost = Boolean(user && room && room.hostId === user.uid);
 
