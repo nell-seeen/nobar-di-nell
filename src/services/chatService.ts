@@ -31,6 +31,14 @@ export const listenToChat = (roomId: string, callback: (messages: ChatMessage[])
       id: doc.id,
       ...doc.data()
     })) as ChatMessage[];
+    
+    // Sort in memory to handle pending timestamps properly (null -> Infinity)
+    messages.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis?.() || Date.now() + 100000;
+      const timeB = b.createdAt?.toMillis?.() || Date.now() + 100000;
+      return timeB - timeA; // Descending
+    });
+    
     // Reverse so the newest is at the bottom
     callback(messages.reverse());
   });
