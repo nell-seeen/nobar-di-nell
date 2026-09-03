@@ -19,7 +19,7 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/movies/search?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/catalog/search?query=${encodeURIComponent(query)}`);
       const data = await res.json();
       setResults(data.results || []);
     } catch (err) {
@@ -33,7 +33,7 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
   const handleSelect = async (movie: any) => {
     setAddingId(movie.id);
     try {
-      const res = await fetch(`/api/movies/${movie.id}/videos`);
+      const res = await fetch(`/api/catalog/${movie.id}/videos`);
       const data = await res.json();
       
       let videoUrl = '';

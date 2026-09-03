@@ -22,7 +22,7 @@ export default function TmdbExploreSection() {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const res = await fetch('/api/movies/explore');
+        const res = await fetch('/api/catalog/explore');
         const data = await res.json();
         if (data.results) {
           setMovies(data.results.slice(0, 12));
@@ -41,7 +41,7 @@ export default function TmdbExploreSection() {
     setSavingId(movie.id);
     try {
       // We need to fetch videos to get the trailer link for this movie
-      const res = await fetch(`/api/movies/${movie.id}/videos`);
+      const res = await fetch(`/api/catalog/${movie.id}/videos`);
       const data = await res.json();
       
       let videoUrl = '';

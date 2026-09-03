@@ -19,7 +19,7 @@ async function startServer() {
   });
 
   // TMDB API Route - Fetch Indonesian Movies
-  app.get("/api/movies/explore", async (req, res) => {
+  app.get("/api/catalog/explore", async (req, res) => {
     try {
       const response = await fetch(
         `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_original_language=id&sort_by=popularity.desc`
@@ -36,7 +36,7 @@ async function startServer() {
   });
 
   // TMDB API Route - Search Indonesian Movies
-  app.get("/api/movies/search", async (req, res) => {
+  app.get("/api/catalog/search", async (req, res) => {
     try {
       const { query } = req.query;
       const response = await fetch(
@@ -60,7 +60,7 @@ async function startServer() {
   });
 
   // Fetch TMDB Movie Videos (for playing trailer)
-  app.get("/api/movies/:id/videos", async (req, res) => {
+  app.get("/api/catalog/:id/videos", async (req, res) => {
     try {
       const { id } = req.params;
       const response = await fetch(
