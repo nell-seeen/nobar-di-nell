@@ -148,8 +148,15 @@ export default function PlayerControls({
             <SkipForward size={24} />
           </button>
           
-          <div className="text-white text-sm font-medium tracking-wider">
-            {formatTime(currentTime)} / {formatTime(duration)}
+          <div className="text-white text-sm font-medium tracking-wider flex items-center gap-2">
+            {duration === Infinity || duration > 360000 ? (
+              <span className="flex items-center gap-1.5 text-red-500 font-bold">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                LIVE
+              </span>
+            ) : (
+              `${formatTime(currentTime)} / ${formatTime(duration)}`
+            )}
           </div>
         </div>
 

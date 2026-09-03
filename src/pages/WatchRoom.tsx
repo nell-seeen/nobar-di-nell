@@ -180,25 +180,39 @@ export default function WatchRoom() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* Left/Center Column */}
-        <div className={clsx("flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar transition-all duration-500", theaterMode ? "p-0 z-10" : "p-4 lg:p-6 gap-6")}>
+        <div className={clsx(
+          "flex-1 flex flex-col min-w-0 transition-all duration-500", 
+          theaterMode ? "p-0 z-10" : "p-4 lg:p-6 gap-6",
+          !theaterMode && "overflow-y-auto custom-scrollbar"
+        )}>
           {/* Video Player */}
-          <section className={clsx("w-full mx-auto shadow-black/50 overflow-hidden transition-all duration-500", theaterMode ? "max-w-full h-full shadow-none rounded-none border-none ring-0 flex flex-col" : "max-w-[1200px] shadow-2xl rounded-lg border border-white/5 ring-1 ring-white/10")}>
+          <section className={clsx(
+            "w-full mx-auto shadow-black/50 overflow-hidden transition-all duration-500 shrink-0", 
+            theaterMode ? "max-w-full h-full shadow-none rounded-none border-none ring-0 flex flex-col" : "max-w-[1200px] shadow-2xl rounded-lg border border-white/5 ring-1 ring-white/10"
+          )}>
             <MediaPlayer roomId={roomId!} isHost={isHost} playlist={playlist} isTheater={theaterMode} />
           </section>
 
           {/* Under Player Content */}
-          <div className={clsx("w-full max-w-[1200px] mx-auto grid-cols-1 lg:grid-cols-3 gap-6 pb-12", theaterMode ? "hidden" : "grid")}>
-            <div className="lg:col-span-2">
+          <div className={clsx("w-full max-w-[1200px] mx-auto grid-cols-1 xl:grid-cols-3 gap-6 pb-6", theaterMode ? "hidden" : "grid")}>
+            <div className="xl:col-span-2 flex flex-col gap-6">
               <PlaylistPanel roomId={roomId!} isHost={isHost} />
             </div>
-            <div className="lg:col-span-1">
+            <div className="xl:col-span-1 flex flex-col gap-6">
               <UserList roomId={roomId!} hostId={room.hostId} />
+              
+              {/* On mobile, chat is moved here or we can just keep chat in the right panel but adjust height */}
             </div>
           </div>
         </div>
 
         {/* Right Chat Panel */}
-        <div className={clsx("transition-all duration-500 z-20 shrink-0", theaterMode ? "absolute right-0 top-0 bottom-0 transform translate-x-full opacity-0 pointer-events-none" : "relative transform translate-x-0 opacity-100 w-full md:w-80 h-full")}>
+        <div className={clsx(
+          "transition-all duration-500 z-20 shrink-0 flex flex-col", 
+          theaterMode 
+            ? "absolute right-0 top-0 bottom-0 transform translate-x-full opacity-0 pointer-events-none" 
+            : "relative transform translate-x-0 opacity-100 w-full md:w-80 lg:w-96 h-[50vh] md:h-full border-t md:border-t-0 md:border-l border-white/10"
+        )}>
           <ChatPanel roomId={roomId!} />
         </div>
       </div>

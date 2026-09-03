@@ -89,7 +89,15 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
     } else {
       const mediaRef = mediaType === 'audio' ? audioRef : videoRef;
       if (mediaRef.current && Math.abs(mediaRef.current.currentTime - position) > 0.5) {
-        mediaRef.current.currentTime = position;
+        let target = position;
+        const seekable = mediaRef.current.seekable;
+        if (seekable && seekable.length > 0) {
+          const start = seekable.start(0);
+          const end = seekable.end(seekable.length - 1);
+          if (target < start) target = start;
+          if (target > end) target = end;
+        }
+        mediaRef.current.currentTime = target;
       }
     }
   };
@@ -135,17 +143,54 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
     
     if (!mediaRef.current) return;
 
-    if (mediaType === 'hls' && Hls.isSupported()) {
-      if (hlsRef.current) hlsRef.current.destroy();
-      const hls = new Hls();
-      hls.loadSource(mediaUrl);
-      hls.attachMedia(mediaRef.current as HTMLVideoElement);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+    if (mediaType === 'hls') {
+      const media = mediaRef.current as HTMLVideoElement;
+      
+      if (media.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS (e.g. Safari)
+        media.src = mediaUrl;
+        media.load();
         if (playbackState.isPlaying) {
-           mediaRef.current?.play().catch(() => setSyncStatus('AUTOPLAY_BLOCKED'));
+          media.play().catch(() => setSyncStatus('AUTOPLAY_BLOCKED'));
         }
-      });
-      hlsRef.current = hls;
+      } else if (Hls.isSupported()) {
+        if (hlsRef.current) hlsRef.current.destroy();
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          backBufferLength: 90,
+        });
+        
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.error("fatal network error encountered, try to recover");
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.error("fatal media error encountered, try to recover");
+                hls.recoverMediaError();
+                break;
+              default:
+                hls.destroy();
+                setSyncStatus('OFFLINE');
+                break;
+            }
+          }
+        });
+
+        hls.loadSource(mediaUrl);
+        hls.attachMedia(media);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (playbackState.isPlaying) {
+            media.play().catch(() => setSyncStatus('AUTOPLAY_BLOCKED'));
+          }
+        });
+        hlsRef.current = hls;
+      } else {
+        setSyncStatus('OFFLINE'); // Unsupported
+      }
     } else {
       mediaRef.current.src = mediaUrl;
       mediaRef.current.load();
@@ -322,6 +367,7 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
           ) : isVideo ? (
             <video
               ref={videoRef}
+              crossOrigin="anonymous"
               className="w-full h-full object-contain bg-black"
               onTimeUpdate={onTimeUpdate}
               onDurationChange={(e) => setDuration(e.currentTarget.duration)}
