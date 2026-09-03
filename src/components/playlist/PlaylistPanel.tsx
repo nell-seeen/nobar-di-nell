@@ -6,13 +6,16 @@ import { updatePlaylistOrder, votePlaylistItem } from '../../services/playlistSe
 import { useRoomStore } from '../../store/roomStore';
 import { useAuth } from '../../hooks/useAuth';
 import { detectMediaType } from '../../utils/helpers';
-import { Play, Trash2, Plus, Music, Video, Link as LinkIcon, GripVertical, ChevronUp, ChevronDown, Search } from 'lucide-react';
+import { Play, Trash2, Plus, Music, Video, Link as LinkIcon, GripVertical, ChevronUp, ChevronDown, Search, Bookmark, Film } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import YoutubeSearchModal from './YoutubeSearchModal';
+import LibraryModal from './LibraryModal';
+
+import TmdbSearchModal from './TmdbSearchModal';
 
 interface PlaylistPanelProps {
   roomId: string;
@@ -119,6 +122,8 @@ export default function PlaylistPanel({ roomId, isHost }: PlaylistPanelProps) {
   const [newTitle, setNewTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [isSearchingYoutube, setIsSearchingYoutube] = useState(false);
+  const [isSearchingTmdb, setIsSearchingTmdb] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   
   const hasControl = true; // Overridden to allow all users to add videos
   const hasPlaybackControl = true; // Overridden to allow all users to control playback
@@ -197,6 +202,20 @@ export default function PlaylistPanel({ roomId, isHost }: PlaylistPanelProps) {
         <h3 className="text-white font-medium">Playlist</h3>
         {hasControl && (
           <div className="flex gap-2">
+            <button 
+              onClick={() => setIsLibraryOpen(true)}
+              className="text-neutral-400 hover:text-red-500 transition p-1"
+              title="Add from Library"
+            >
+              <Bookmark size={18} />
+            </button>
+            <button 
+              onClick={() => setIsSearchingTmdb(true)}
+              className="text-neutral-400 hover:text-red-500 transition p-1"
+              title="Search Movies"
+            >
+              <Film size={18} />
+            </button>
             <button 
               onClick={() => setIsSearchingYoutube(true)}
               className="text-neutral-400 hover:text-red-500 transition p-1"
@@ -286,6 +305,44 @@ export default function PlaylistPanel({ roomId, isHost }: PlaylistPanelProps) {
               order: items.length
             });
           }} 
+        />
+      )}
+
+      {isLibraryOpen && (
+        <LibraryModal
+          onClose={() => setIsLibraryOpen(false)}
+          onSelect={async (url, title, thumbnail) => {
+            if (!user) return;
+            await addToPlaylist(roomId, {
+              title: title || 'Media',
+              url: url,
+              mediaType: detectMediaType(url),
+              duration: 0,
+              thumbnail: thumbnail || '',
+              addedBy: user.uid,
+              order: items.length
+            });
+            setIsLibraryOpen(false);
+          }}
+        />
+      )}
+
+      {isSearchingTmdb && (
+        <TmdbSearchModal
+          onClose={() => setIsSearchingTmdb(false)}
+          onSelect={async (url, title, thumbnail) => {
+            if (!user) return;
+            await addToPlaylist(roomId, {
+              title: title || 'Movie Trailer',
+              url: url,
+              mediaType: detectMediaType(url),
+              duration: 0,
+              thumbnail: thumbnail || '',
+              addedBy: user.uid,
+              order: items.length
+            });
+            setIsSearchingTmdb(false);
+          }}
         />
       )}
     </div>

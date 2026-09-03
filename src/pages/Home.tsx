@@ -16,9 +16,13 @@ export default function Home() {
     try {
       const newRoomId = await createRoom(user.uid);
       navigate(`/watch/${newRoomId}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to create room');
+      if (err.message?.includes('unavailable') || err.message?.includes('network')) {
+        alert('Failed to create room. Please check your internet connection and disable any Adblockers or Brave Shields.');
+      } else {
+        alert('Failed to create room');
+      }
       setLoading(false);
     }
   };

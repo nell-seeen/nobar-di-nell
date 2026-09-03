@@ -17,6 +17,7 @@ export interface RoomDocument {
   maxUsers: number;
   settings: RoomSettings;
   bannedUsers: string[];
+  isPublic?: boolean;
 }
 
 interface RoomState {

@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, runTransaction, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { RoomDocument } from '../store/roomStore';
 import { generateRoomId } from '../utils/helpers';
@@ -15,6 +15,7 @@ export const createRoom = async (hostId: string): Promise<string> => {
     updatedAt: serverTimestamp(),
     locked: false,
     maxUsers: 50,
+    isPublic: true,
     settings: {
       chatEnabled: true,
       reactionEnabled: true,
@@ -42,6 +43,27 @@ export const createRoom = async (hostId: string): Promise<string> => {
   });
 
   return roomId;
+};
+
+export const getPublicRooms = async (): Promise<RoomDocument[]> => {
+  const roomsRef = collection(db, 'rooms');
+  const q = query(
+    roomsRef,
+    where('isPublic', '==', true),
+    limit(50)
+  );
+  
+  const snapshot = await getDocs(q);
+  const rooms = snapshot.docs.map(doc => doc.data() as RoomDocument);
+  
+  // Filter and sort in memory to avoid requiring Firestore composite indexes
+  return rooms
+    .filter(r => !r.locked)
+    .sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
 };
 
 export const updateRoomLock = async (roomId: string, locked: boolean) => {
