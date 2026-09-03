@@ -120,8 +120,8 @@ export default function PlaylistPanel({ roomId, isHost }: PlaylistPanelProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [isSearchingYoutube, setIsSearchingYoutube] = useState(false);
   
-  const hasControl = isHost || room?.settings.playlistModification;
-  const hasPlaybackControl = isHost || room?.settings.viewerControl;
+  const hasControl = true; // Overridden to allow all users to add videos
+  const hasPlaybackControl = true; // Overridden to allow all users to control playback
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

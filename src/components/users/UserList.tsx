@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePresence } from '../../hooks/usePresence';
+import { useVoiceChat } from '../../hooks/useVoiceChat';
+import RemoteAudio from './RemoteAudio';
 import { Crown, MoreVertical, Ban, ArrowRightLeft, Mic, MicOff, PhoneCall, PhoneOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { banUser, transferHost } from '../../services/roomService';
@@ -20,12 +22,15 @@ export default function UserList({ roomId, hostId }: UserListProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const streamRef = useRef<MediaStream | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const animationRef = useRef<number>();
   
   const isHost = currentUser?.uid === hostId;
   const onlineUsers = Object.values(users).filter(u => u.online);
+
+  const { remoteStreams } = useVoiceChat(roomId, isVoiceConnected, localStream);
 
   const handleBan = async (uid: string) => {
     if (!isHost || !currentUser) return;
@@ -49,6 +54,7 @@ export default function UserList({ roomId, hostId }: UserListProps) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
+      setLocalStream(null);
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
@@ -62,6 +68,7 @@ export default function UserList({ roomId, hostId }: UserListProps) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         streamRef.current = stream;
+        setLocalStream(stream);
         
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         audioContextRef.current = audioCtx;
@@ -114,6 +121,9 @@ export default function UserList({ roomId, hostId }: UserListProps) {
 
   return (
     <div className="bg-neutral-900 rounded-lg p-4 border border-white/5 h-full flex flex-col">
+      {Object.entries(remoteStreams).map(([peerUid, stream]) => (
+        <RemoteAudio key={peerUid} stream={stream} />
+      ))}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-medium flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>

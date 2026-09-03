@@ -30,7 +30,7 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
   const { playbackState } = usePlaybackStore();
   const { room } = useRoomStore();
   
-  const hasControl = isHost || room?.settings.viewerControl;
+  const hasControl = true;
   
   const [syncEngine, setSyncEngine] = useState<SyncEngine | null>(null);
   const [syncStatus, setSyncStatus] = useState<'SYNCED' | 'SYNCING' | 'OFFLINE' | 'BUFFERING' | 'AUTOPLAY_BLOCKED'>('OFFLINE');

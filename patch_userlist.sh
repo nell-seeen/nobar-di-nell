@@ -1,0 +1,1 @@
+sed -i 's/const streamRef = useRef<MediaStream | null>(null);/const streamRef = useRef<MediaStream | null>(null);\n  const [localStream, setLocalStream] = useState<MediaStream | null>(null);/g' src/components/users/UserList.tsx
