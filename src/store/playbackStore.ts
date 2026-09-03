@@ -9,7 +9,7 @@ export interface PlaybackStateDoc {
   updatedAt: any;
   playbackVersion: number;
   commandId: string;
-  command: 'PLAY' | 'PAUSE' | 'SEEK' | 'NEXT' | 'PREVIOUS' | 'CHANGE_MEDIA';
+  command: 'PLAY' | 'PAUSE' | 'SEEK' | 'NEXT' | 'PREVIOUS' | 'CHANGE_MEDIA' | 'SYNC_TIME';
   updatedBy: string;
 }
 

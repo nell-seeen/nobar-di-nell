@@ -24,8 +24,8 @@ export class SyncEngine {
 
   constructor(options: SyncEngineOptions) {
     this.options = {
-      driftThresholdMs: 250,
-      hardSeekThresholdMs: 1000,
+      driftThresholdMs: 2000,
+      hardSeekThresholdMs: 5000,
       ...options
     };
   }

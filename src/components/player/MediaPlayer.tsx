@@ -258,6 +258,27 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
     }, playbackState.playbackVersion, user.uid);
   }, [hasControl, user, playbackState, playlist, roomId, getMediaTime, handleHostSeek]);
 
+  // Periodic Host Sync heartbeat
+  useEffect(() => {
+    if (!hasControl || !localPlaying || !playbackState || !user) return;
+    
+    // Broadcast exact media time every 5 seconds so viewers can correct any drift
+    const interval = setInterval(() => {
+      const currentTime = getMediaTime();
+      if (currentTime > 0) {
+        sendPlaybackCommand(
+          roomId, 
+          'SYNC_TIME', 
+          { isPlaying: true, position: currentTime }, 
+          playbackState.playbackVersion, 
+          user.uid
+        );
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [hasControl, localPlaying, playbackState, roomId, user, getMediaTime]);
+
   // Media Session API Setup
   useEffect(() => {
     if ('mediaSession' in navigator && playbackState) {
