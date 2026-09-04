@@ -5,7 +5,7 @@ export interface PlaylistItem {
   id: string;
   title: string;
   url: string;
-  mediaType: 'video' | 'audio' | 'hls' | 'youtube';
+  mediaType: 'video' | 'audio' | 'hls' | 'youtube' | 'embed';
   duration: number;
   thumbnail: string;
   addedBy: string;

@@ -42,7 +42,8 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   const mediaType = playbackState?.mediaType || detectMediaType(playbackState?.mediaUrl || '');
-  const isVideo = mediaType !== 'audio' && mediaType !== 'youtube';
+  const isEmbed = mediaType === 'embed';
+  const isVideo = mediaType !== 'audio' && mediaType !== 'youtube' && !isEmbed;
   const isYoutube = mediaType === 'youtube';
 
   const getMediaTime = () => {
@@ -352,7 +353,16 @@ export default function MediaPlayer({ roomId, isHost, playlist, isTheater = fals
         </div>
       ) : (
         <>
-          {isYoutube ? (
+          {isEmbed ? (
+            <div className="relative w-full h-full bg-black">
+              <iframe
+                src={playbackState.mediaUrl}
+                className="w-full h-full border-0"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : isYoutube ? (
             <div className="relative w-full h-full">
               <div 
                 className="absolute inset-0 z-10 cursor-pointer" 

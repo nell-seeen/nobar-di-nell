@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export interface PlaybackStateDoc {
   mediaUrl: string;
-  mediaType: 'video' | 'audio' | 'hls' | 'youtube';
+  mediaType: 'video' | 'audio' | 'hls' | 'youtube' | 'embed';
   currentIndex: number;
   isPlaying: boolean;
   position: number;

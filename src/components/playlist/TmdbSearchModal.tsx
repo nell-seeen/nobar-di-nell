@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Search, Film, Play, Plus } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { X, Search, Film, Play, Plus, Video } from 'lucide-react';
+import { searchTmdbMovies, getMovieEmbedStreamUrl, fetchMovieVideos } from '../../services/tmdbService';
 
 interface TmdbSearchModalProps {
   onClose: () => void;
@@ -19,9 +19,8 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/catalog/search?query=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setResults(data.results || []);
+      const data = await searchTmdbMovies(query);
+      setResults(data?.results || []);
     } catch (err) {
       console.error(err);
       alert('Gagal mencari film');
@@ -30,14 +29,24 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
     }
   };
 
-  const handleSelect = async (movie: any) => {
+  // Add Full Movie Embed to room playlist (Stream like Tianetflix)
+  const handleSelectFullMovie = (movie: any) => {
+    const streamUrl = getMovieEmbedStreamUrl(movie.id);
+    const thumb = movie.backdrop_path || movie.poster_path 
+      ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}` 
+      : '';
+    
+    onSelect(streamUrl, `${movie.title} (Full Movie)`, thumb);
+  };
+
+  // Add Trailer to room playlist
+  const handleSelectTrailer = async (movie: any) => {
     setAddingId(movie.id);
     try {
-      const res = await fetch(`/api/catalog/${movie.id}/videos`);
-      const data = await res.json();
+      const data = await fetchMovieVideos(movie.id);
       
       let videoUrl = '';
-      if (data.results && data.results.length > 0) {
+      if (data?.results && data.results.length > 0) {
         const trailer = data.results.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube') || data.results[0];
         if (trailer && trailer.site === 'YouTube') {
           videoUrl = `https://www.youtube.com/watch?v=${trailer.key}`;
@@ -45,31 +54,31 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
       }
 
       if (!videoUrl) {
-        alert(`Trailer tidak ditemukan untuk ${movie.title}. Hanya menambahkan metadata.`);
         videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' trailer')}`;
       }
 
-      onSelect(
-        videoUrl,
-        movie.title,
-        movie.backdrop_path || movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}` : ''
-      );
+      const thumb = movie.backdrop_path || movie.poster_path 
+        ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}` 
+        : '';
+
+      onSelect(videoUrl, `${movie.title} (Trailer)`, thumb);
     } catch (err) {
       console.error(err);
-      alert('Gagal mengambil trailer film');
+      alert('Gagal mengambil trailer');
     } finally {
       setAddingId(null);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-neutral-900 border border-white/10 rounded-2xl w-full max-w-4xl max-h-[88vh] flex flex-col shadow-2xl">
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Film className="text-red-500" /> Cari Film Indonesia (TMDB)
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition">
+          <div className="flex items-center gap-2">
+            <Film className="text-red-500" size={22} />
+            <h2 className="text-lg font-bold text-white">Cari Film TMDB (Full Movie / Trailer)</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition text-neutral-400 hover:text-white">
             <X size={20} />
           </button>
         </div>
@@ -81,35 +90,40 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
             </div>
             <input
               type="text"
-              placeholder="Cari judul film..."
+              placeholder="Cari judul film Indonesia atau internasional..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white outline-none focus:border-red-500 transition"
+              className="w-full bg-black/70 border border-white/15 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-red-500 transition"
               autoFocus
             />
           </div>
-          <button type="submit" disabled={loading || !query.trim()} className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium disabled:opacity-50 transition">
-            Cari
+          <button 
+            type="submit" 
+            disabled={loading || !query.trim()} 
+            className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition shadow-md"
+          >
+            {loading ? 'Mencari...' : 'Cari'}
           </button>
         </form>
         
         <div className="p-4 overflow-y-auto flex-1">
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex flex-col justify-center items-center py-20 gap-3">
+              <div className="w-8 h-8 border-3 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs text-neutral-400">Mencari di katalog TMDB...</p>
             </div>
           ) : results.length === 0 ? (
             <div className="text-center py-20 text-neutral-500">
-              <Film className="mx-auto mb-4 opacity-50" size={48} />
-              <p>Cari film untuk ditambahkan ke playlist.</p>
-              <p className="text-sm mt-1">Hasil pencarian otomatis difilter untuk film berbahasa Indonesia.</p>
+              <Film className="mx-auto mb-4 opacity-40 text-neutral-400" size={48} />
+              <p className="font-medium text-neutral-300">Cari film untuk diputar di watch room bersama.</p>
+              <p className="text-xs text-neutral-500 mt-1">Anda dapat memutar Full Movie (Stream Embed) atau Trailer langsung di room!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {results.map(movie => (
                 <div 
                   key={movie.id} 
-                  className="bg-black border border-white/5 rounded-xl overflow-hidden group flex flex-col"
+                  className="bg-neutral-950 border border-white/5 rounded-xl overflow-hidden group flex flex-col hover:border-red-500/30 transition"
                 >
                   <div className="aspect-[2/3] relative bg-neutral-800">
                     {movie.poster_path ? (
@@ -123,23 +137,32 @@ export default function TmdbSearchModal({ onClose, onSelect }: TmdbSearchModalPr
                         <Film className="text-neutral-600" size={32} />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                    
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5 gap-1.5">
                       <button 
-                        onClick={() => handleSelect(movie)}
-                        disabled={addingId === movie.id}
-                        className="w-full py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 disabled:opacity-50 transition"
+                        onClick={() => handleSelectFullMovie(movie)}
+                        className="w-full py-1.5 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 transition shadow"
                       >
-                        {addingId === movie.id ? 'Loading...' : (
-                          <>
-                            <Plus size={14} /> Ke Playlist
-                          </>
-                        )}
+                        <Play size={12} fill="currentColor" /> Full Movie (Nobar)
+                      </button>
+
+                      <button 
+                        onClick={() => handleSelectTrailer(movie)}
+                        disabled={addingId === movie.id}
+                        className="w-full py-1.5 bg-white/15 hover:bg-white/25 text-white text-[11px] font-medium rounded-lg flex items-center justify-center gap-1 transition"
+                      >
+                        <Video size={12} /> {addingId === movie.id ? 'Memuat...' : 'Trailer'}
                       </button>
                     </div>
+
+                    <div className="absolute top-2 right-2 bg-black/75 backdrop-blur text-[10px] font-bold px-1.5 py-0.5 rounded text-yellow-400 border border-white/10">
+                      ★ {(movie.vote_average || 0).toFixed(1)}
+                    </div>
                   </div>
-                  <div className="p-3 flex-1 flex flex-col">
-                    <h4 className="font-bold text-sm line-clamp-2 text-white">{movie.title}</h4>
-                    <p className="text-xs text-neutral-500 mt-1">{movie.release_date?.substring(0, 4)}</p>
+
+                  <div className="p-2.5 flex-1 flex flex-col justify-between">
+                    <h4 className="font-bold text-xs line-clamp-1 text-white" title={movie.title}>{movie.title}</h4>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">{movie.release_date?.substring(0, 4) || 'Unknown'}</p>
                   </div>
                 </div>
               ))}

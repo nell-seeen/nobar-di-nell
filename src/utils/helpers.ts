@@ -28,12 +28,12 @@ export function isHlsUrl(rawUrl: string): boolean {
   }
 }
 
-export function detectMediaType(url: string): 'video' | 'audio' | 'hls' | 'youtube' {
+export function detectMediaType(url: string): 'video' | 'audio' | 'hls' | 'youtube' | 'embed' {
   if (!url) return 'video';
   const lowerUrl = url.toLowerCase();
   
   if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
-  
+  if (lowerUrl.includes('vidsrc') || lowerUrl.includes('embed') || lowerUrl.includes('2embed') || lowerUrl.includes('autoembed')) return 'embed';
   if (isHlsUrl(url)) return 'hls';
   
   try {
